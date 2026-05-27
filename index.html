@@ -36,6 +36,7 @@
           <a href="#/notes" class="nav-link" id="nav-notes">Notes</a>
           <a href="#/papers" class="nav-link" id="nav-papers">Papers</a>
           <a href="#/resources" class="nav-link" id="nav-resources">Resources</a>
+          <a href="#/support" class="nav-link" id="nav-support">Help & Support</a>
           <a href="#/my-uploads" class="nav-link" id="nav-my-uploads" style="display: none; align-items: center; gap: 4px;">
             <i data-lucide="folder-heart" style="width: 16px; height: 16px;"></i> My Uploads
           </a>
@@ -371,6 +372,20 @@
             </div>
           </div>
         </div>
+
+        <!-- Help & Support Requests Section -->
+        <div style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 30px;">
+          <h3 class="section-title" style="margin-bottom: 16px; font-size: 20px;">
+            <i data-lucide="help-circle" style="color: var(--primary); width: 20px; height: 20px;"></i> 
+            Help & Support Requests (<span id="support-requests-count">0</span>)
+          </h3>
+          <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">
+            View and manage support tickets, feature requests, or queries submitted by educators and students.
+          </p>
+          <div id="support-requests-list-container">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
       </div>
 
       <!-- MY UPLOADS VIEW -->
@@ -399,6 +414,58 @@
         </div>
       </div>
 
+      <!-- HELP & SUPPORT VIEW -->
+      <div id="view-support" class="page-view">
+        <div class="support-container" style="max-width: 600px; margin: 0 auto;">
+          <div class="card support-card">
+            <div class="auth-header" style="margin-bottom: 24px;">
+              <h2 style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i data-lucide="help-circle" style="color: var(--primary); width: 28px; height: 28px;"></i>
+                Help & Support
+              </h2>
+              <p>Share your requests, questions, or issues with our admin team</p>
+            </div>
+
+            <div id="support-error-alert" class="alert alert-danger" style="display: none;"></div>
+            <div id="support-success-alert" class="alert alert-success" style="display: none;"></div>
+
+            <form id="form-support">
+              <div class="form-group-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label">Your Name</label>
+                  <input id="support-user-name" type="text" class="form-input" disabled />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label">Phone Number</label>
+                  <input id="support-user-phone" type="text" class="form-input" disabled />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Role</label>
+                <input id="support-user-role" type="text" class="form-input" style="text-transform: capitalize;" disabled />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="support-subject">Subject</label>
+                <input id="support-subject" type="text" class="form-input" placeholder="e.g., Unable to download Engineering Physics PYQ" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="support-message">Message</label>
+                <textarea id="support-message" class="form-input" style="min-height: 120px; resize: vertical;" placeholder="Provide details of your request or issue..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <span id="support-btn-content" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <i data-lucide="send" style="width: 18px; height: 18px;"></i> Submit Request
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <!-- Footer -->
@@ -413,7 +480,7 @@
         <span style="opacity: 0.3;">|</span>
         <a href="#terms" class="footer-link">Terms of Service</a>
         <span style="opacity: 0.3;">|</span>
-        <a href="mailto:support@studyhub.edu" class="footer-link">Contact Support</a>
+        <a href="#/support" class="footer-link">Help & Support</a>
       </div>
     </footer>
   </div>
