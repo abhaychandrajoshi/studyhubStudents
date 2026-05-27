@@ -28,29 +28,32 @@
         <span>Study Hub</span>
       </a>
 
-      <!-- Desktop Nav Links -->
-      <nav class="nav-links desktop-nav">
-        <a href="#/" class="nav-link" id="nav-home">Home</a>
-        <a href="#/notes" class="nav-link" id="nav-notes">Notes</a>
-        <a href="#/papers" class="nav-link" id="nav-papers">Papers</a>
-        <a href="#/resources" class="nav-link" id="nav-resources">Resources</a>
-        <a href="#/my-uploads" class="nav-link" id="nav-my-uploads" style="display: none; align-items: center; gap: 4px;">
-          <i data-lucide="folder-heart" style="width: 16px; height: 16px;"></i> My Uploads
-        </a>
-        <a href="#/admin" class="nav-link" id="nav-admin" style="display: none; align-items: center; gap: 4px;">
-          <i data-lucide="shield-alert" style="width: 16px; height: 16px;"></i> Admin
-        </a>
+      <!-- Desktop Nav Links & Auth State Wrapper -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <!-- Desktop Nav Links -->
+        <nav class="nav-links desktop-nav">
+          <a href="#/" class="nav-link" id="nav-home">Home</a>
+          <a href="#/notes" class="nav-link" id="nav-notes">Notes</a>
+          <a href="#/papers" class="nav-link" id="nav-papers">Papers</a>
+          <a href="#/resources" class="nav-link" id="nav-resources">Resources</a>
+          <a href="#/my-uploads" class="nav-link" id="nav-my-uploads" style="display: none; align-items: center; gap: 4px;">
+            <i data-lucide="folder-heart" style="width: 16px; height: 16px;"></i> My Uploads
+          </a>
+          <a href="#/admin" class="nav-link" id="nav-admin" style="display: none; align-items: center; gap: 4px;">
+            <i data-lucide="shield-alert" style="width: 16px; height: 16px;"></i> Admin
+          </a>
+        </nav>
 
-        <!-- Auth state container -->
+        <!-- Auth state container (visible on both mobile and desktop) -->
         <div id="nav-auth-container" style="display: flex; align-items: center;">
           <!-- Will be populated by app.js -->
         </div>
-      </nav>
 
-      <!-- Hamburger Button (Mobile Only) -->
-      <button id="btn-hamburger" class="btn-hamburger" aria-label="Toggle Navigation Menu">
-        <i data-lucide="menu"></i>
-      </button>
+        <!-- Hamburger Button (Mobile Only) -->
+        <button id="btn-hamburger" class="btn-hamburger" aria-label="Toggle Navigation Menu">
+          <i data-lucide="menu"></i>
+        </button>
+      </div>
     </header>
 
     <!-- Mobile Navigation Drawer Overlay -->
