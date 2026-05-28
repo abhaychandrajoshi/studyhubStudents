@@ -640,8 +640,20 @@
         <div class="form-group">
           <label class="form-label" for="send-message-body" style="font-weight: 600;">Message Body</label>
           <textarea id="send-message-body" class="form-input" style="min-height: 120px; resize: vertical;" placeholder="e.g. Please upload the Engineering Physics Lab Manual Unit 2 PDF." required></textarea>
-          <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-            The message will be automatically formatted and sent anonymously as <strong>ADMIN</strong>.
+          
+          <!-- Template selector section -->
+          <div style="margin-top: 10px; padding: 10px; background-color: #f8fafc; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Quick Templates:</span>
+            <div id="quick-templates-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+              <!-- Dynamic templates loaded here -->
+            </div>
+            <button type="button" id="btn-save-as-template" class="btn btn-secondary btn-sm" style="font-size: 10px; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; border-color: #cbd5e1;">
+              <i data-lucide="plus" style="width: 10px; height: 10px;"></i> Save Current Text as Template
+            </button>
+          </div>
+
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+            The message will be automatically formatted and sent anonymously as <strong>From[ADMIN]</strong>.
           </p>
         </div>
         <div class="form-actions">
