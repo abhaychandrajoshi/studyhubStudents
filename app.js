@@ -275,6 +275,9 @@ let currentResourcesFolder = null;
 let currentResourcesSection = 'root'; // 'root' | 'syllabus' | 'lab_manuals' | 'lab_manuals_folder' | 'books' | 'books_folder' | 'calculator'
 let notesFoldersList = []; // Kept in memory to populate syllabus uploads
 let activeDirectoryTab = 'admin'; // 'admin' | 'teacher' | 'student'
+let directoryVisibleCount = 5;
+let helpRequestsVisibleCount = 5;
+let notificationsVisibleCount = 5;
 
 // GPA Calculator State
 const GRADE_POINTS = { 'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'P': 4, 'F': 0 };
@@ -598,6 +601,9 @@ async function router() {
     document.getElementById('view-resources').style.display = 'block';
     await renderResourcesView();
   } else if (hash === '#/admin') {
+    directoryVisibleCount = 5;
+    helpRequestsVisibleCount = 5;
+    notificationsVisibleCount = 5;
     document.getElementById('view-admin').style.display = 'block';
     await renderAdminDashboardView();
   } else if (hash === '#/my-uploads') {
@@ -1942,9 +1948,9 @@ async function renderAdminDashboardView() {
         <button class="calc-tab ${activeDirectoryTab === 'student' ? 'active' : ''}" id="tab-dir-student">Students (${studentsList.length})</button>
       `;
 
-      document.getElementById('tab-dir-admin').addEventListener('click', () => { activeDirectoryTab = 'admin'; updateDirectoryView(); });
-      document.getElementById('tab-dir-teacher').addEventListener('click', () => { activeDirectoryTab = 'teacher'; updateDirectoryView(); });
-      document.getElementById('tab-dir-student').addEventListener('click', () => { activeDirectoryTab = 'student'; updateDirectoryView(); });
+      document.getElementById('tab-dir-admin').addEventListener('click', () => { activeDirectoryTab = 'admin'; directoryVisibleCount = 5; updateDirectoryView(); });
+      document.getElementById('tab-dir-teacher').addEventListener('click', () => { activeDirectoryTab = 'teacher'; directoryVisibleCount = 5; updateDirectoryView(); });
+      document.getElementById('tab-dir-student').addEventListener('click', () => { activeDirectoryTab = 'student'; directoryVisibleCount = 5; updateDirectoryView(); });
     };
 
     const updateDirectoryView = () => {
@@ -1957,11 +1963,15 @@ async function renderAdminDashboardView() {
 
       if (selectedUsers.length === 0) {
         allContainer.innerHTML = `<div class="empty-state">No users found in this category.</div>`;
+        const dirShowMoreContainer = document.getElementById('directory-show-more-container');
+        if (dirShowMoreContainer) dirShowMoreContainer.innerHTML = '';
         lucide.createIcons();
         return;
       }
 
-      allContainer.innerHTML = selectedUsers.map(u => {
+      const slicedUsers = selectedUsers.slice(0, directoryVisibleCount);
+
+      allContainer.innerHTML = slicedUsers.map(u => {
         const isPrimarySuperAdmin = u.phone === '8218325600';
         const canPromote = currentUser.role === 'superadmin' && u.role === 'admin';
         
@@ -2072,6 +2082,25 @@ async function renderAdminDashboardView() {
         });
       });
 
+      // Render Show More button for Directory if needed
+      const dirShowMoreContainer = document.getElementById('directory-show-more-container');
+      const dirRemaining = selectedUsers.length - directoryVisibleCount;
+      if (dirShowMoreContainer) {
+        if (dirRemaining > 0) {
+          dirShowMoreContainer.innerHTML = `
+            <button id="btn-directory-show-more" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px; font-weight: 600;">
+              Show More (${dirRemaining} remaining) <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+            </button>
+          `;
+          document.getElementById('btn-directory-show-more').addEventListener('click', () => {
+            directoryVisibleCount += 10;
+            updateDirectoryView();
+          });
+        } else {
+          dirShowMoreContainer.innerHTML = '';
+        }
+      }
+
       lucide.createIcons();
     };
 
@@ -2090,8 +2119,12 @@ async function renderAdminDashboardView() {
 
         if (tickets.length === 0) {
           helpRequestsContainer.innerHTML = '<div class="empty-state">No support requests submitted yet.</div>';
+          const supportShowMoreContainer = document.getElementById('support-show-more-container');
+          if (supportShowMoreContainer) supportShowMoreContainer.innerHTML = '';
         } else {
-          helpRequestsContainer.innerHTML = tickets.map(t => {
+          const slicedTickets = tickets.slice(0, helpRequestsVisibleCount);
+
+          helpRequestsContainer.innerHTML = slicedTickets.map(t => {
             const isResolved = t.status === 'resolved';
             const cardClass = isResolved ? 'status-resolved' : 'status-pending';
             const badgeClass = isResolved ? 'status-badge-resolved' : 'status-badge-pending';
@@ -2175,6 +2208,25 @@ async function renderAdminDashboardView() {
               }
             });
           });
+
+          // Render Show More button for Support requests if needed
+          const supportShowMoreContainer = document.getElementById('support-show-more-container');
+          const supportRemaining = tickets.length - helpRequestsVisibleCount;
+          if (supportShowMoreContainer) {
+            if (supportRemaining > 0) {
+              supportShowMoreContainer.innerHTML = `
+                <button id="btn-support-show-more" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px; font-weight: 600;">
+                  Show More (${supportRemaining} remaining) <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+                </button>
+              `;
+              document.getElementById('btn-support-show-more').addEventListener('click', () => {
+                helpRequestsVisibleCount += 10;
+                renderAdminDashboardView();
+              });
+            } else {
+              supportShowMoreContainer.innerHTML = '';
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching help requests:', err);
@@ -2197,8 +2249,12 @@ async function renderAdminDashboardView() {
 
         if (notifications.length === 0) {
           superadminMessagesContainer.innerHTML = '<div class="empty-state">No notification messages sent yet.</div>';
+          const messagesShowMoreContainer = document.getElementById('messages-show-more-container');
+          if (messagesShowMoreContainer) messagesShowMoreContainer.innerHTML = '';
         } else {
-          superadminMessagesContainer.innerHTML = notifications.map(n => {
+          const slicedNotifications = notifications.slice(0, notificationsVisibleCount);
+
+          superadminMessagesContainer.innerHTML = slicedNotifications.map(n => {
             const seenLabelClass = n.read ? 'status-badge-resolved' : 'status-badge-pending';
             const seenText = n.read ? 'seen' : 'unseen';
             const seenIcon = n.read ? 'eye' : 'eye-off';
@@ -2284,6 +2340,25 @@ async function renderAdminDashboardView() {
               }
             });
           });
+
+          // Render Show More button for Sent notifications if needed
+          const messagesShowMoreContainer = document.getElementById('messages-show-more-container');
+          const messagesRemaining = notifications.length - notificationsVisibleCount;
+          if (messagesShowMoreContainer) {
+            if (messagesRemaining > 0) {
+              messagesShowMoreContainer.innerHTML = `
+                <button id="btn-messages-show-more" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px; font-weight: 600;">
+                  Show More (${messagesRemaining} remaining) <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+                </button>
+              `;
+              document.getElementById('btn-messages-show-more').addEventListener('click', () => {
+                notificationsVisibleCount += 10;
+                renderAdminDashboardView();
+              });
+            } else {
+              messagesShowMoreContainer.innerHTML = '';
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching sent notifications:', err);
@@ -2291,6 +2366,8 @@ async function renderAdminDashboardView() {
       }
     } else if (superadminMessagesSection) {
       superadminMessagesSection.style.display = 'none';
+      const messagesShowMoreContainer = document.getElementById('messages-show-more-container');
+      if (messagesShowMoreContainer) messagesShowMoreContainer.innerHTML = '';
     }
 
     lucide.createIcons();
