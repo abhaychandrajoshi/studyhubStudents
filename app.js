@@ -246,6 +246,23 @@ const api = {
     return await request(`/notifications/templates/${id}`, {
       method: 'DELETE'
     });
+  },
+
+  async getAllNotifications() {
+    return await request('/notifications/all');
+  },
+
+  async deleteNotification(id) {
+    return await request(`/notifications/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async updateNotification(id, message) {
+    return await request(`/notifications/${id}`, {
+      method: 'PUT',
+      body: { message }
+    });
   }
 };
 
@@ -2163,6 +2180,117 @@ async function renderAdminDashboardView() {
         console.error('Error fetching help requests:', err);
         helpRequestsContainer.innerHTML = `<div class="empty-state" style="color: var(--danger);">Failed to load support requests: ${escapeHTML(err.message)}</div>`;
       }
+    }
+
+    // Fetch and render superadmin notification messages list
+    const superadminMessagesSection = document.getElementById('superadmin-messages-section');
+    const superadminMessagesContainer = document.getElementById('superadmin-messages-list-container');
+    const superadminMessagesCount = document.getElementById('superadmin-messages-count');
+
+    if (currentUser.role === 'superadmin' && superadminMessagesSection && superadminMessagesContainer && superadminMessagesCount) {
+      superadminMessagesSection.style.display = 'block';
+      superadminMessagesContainer.innerHTML = '<div class="empty-state">Loading sent messages...</div>';
+
+      try {
+        const notifications = await api.getAllNotifications();
+        superadminMessagesCount.textContent = notifications.length;
+
+        if (notifications.length === 0) {
+          superadminMessagesContainer.innerHTML = '<div class="empty-state">No notification messages sent yet.</div>';
+        } else {
+          superadminMessagesContainer.innerHTML = notifications.map(n => {
+            const seenLabelClass = n.read ? 'status-badge-resolved' : 'status-badge-pending';
+            const seenText = n.read ? 'seen' : 'unseen';
+            const seenIcon = n.read ? 'eye' : 'eye-off';
+            
+            return `
+              <div class="ticket-card" style="border-left: 4px solid ${n.read ? '#10b981' : '#eab308'}; margin-bottom: 12px; padding: 14px 16px;">
+                <div class="ticket-header" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                  <div class="ticket-user-info">
+                    <h5 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">
+                      To: ${escapeHTML(capitalizeName(n.recipient.name))} (${escapeHTML(n.recipient.phone)})
+                    </h5>
+                    <span style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                      <i data-lucide="calendar" style="width: 12px; height: 12px;"></i> ${new Date(n.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <span class="ticket-status-badge ${seenLabelClass}" style="text-transform: capitalize; padding: 2px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="${seenIcon}" style="width: 12px; height: 12px;"></i> ${seenText}
+                  </span>
+                </div>
+                <div class="ticket-message" style="font-size: 13px; color: var(--text-main); background-color: rgba(243, 248, 255, 0.3); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(30, 86, 160, 0.05); line-height: 1.5; white-space: pre-wrap;">${escapeHTML(n.message)}</div>
+                <div class="ticket-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px;">
+                  ${!n.read ? `
+                    <button class="btn btn-secondary btn-sm btn-edit-notification" data-id="${n.id}" data-raw="${escapeHTML(n.rawMessage)}" style="padding: 4px 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;">
+                      <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i> Edit Message
+                    </button>
+                  ` : ''}
+                  <button class="btn btn-danger btn-sm btn-delete-notification" data-id="${n.id}" style="padding: 4px 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px;">
+                    <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Delete
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Bind Edit button click
+          superadminMessagesContainer.querySelectorAll('.btn-edit-notification').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              const rawMessage = btn.getAttribute('data-raw');
+              
+              const newMsgBody = prompt('Edit your message body:', rawMessage);
+              if (newMsgBody === null) return; // user cancelled
+              
+              if (!newMsgBody.trim()) {
+                alert('Message body cannot be empty');
+                return;
+              }
+
+              const originalHTML = btn.innerHTML;
+              btn.disabled = true;
+              btn.innerHTML = 'Saving...';
+
+              try {
+                await api.updateNotification(id, newMsgBody.trim());
+                await renderAdminDashboardView();
+              } catch (err) {
+                alert(err.message || 'Failed to update message');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+              }
+            });
+          });
+
+          // Bind Delete button click
+          superadminMessagesContainer.querySelectorAll('.btn-delete-notification').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              if (!confirm('Are you sure you want to delete this message?')) return;
+              
+              const originalHTML = btn.innerHTML;
+              btn.disabled = true;
+              btn.innerHTML = 'Deleting...';
+
+              try {
+                await api.deleteNotification(id);
+                await renderAdminDashboardView();
+              } catch (err) {
+                alert(err.message || 'Failed to delete message');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching sent notifications:', err);
+        superadminMessagesContainer.innerHTML = `<div class="empty-state" style="color: var(--danger);">Failed to load sent notifications: ${escapeHTML(err.message)}</div>`;
+      }
+    } else if (superadminMessagesSection) {
+      superadminMessagesSection.style.display = 'none';
     }
 
     lucide.createIcons();
