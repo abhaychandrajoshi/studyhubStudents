@@ -1363,7 +1363,7 @@ async function renderResourcesView() {
         <button class="btn btn-secondary" id="btn-resources-back">
           <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i> Back
         </button>
-        ${(isAdmin && (currentResourcesSection === 'lab_manuals' || currentResourcesSection === 'books')) || (isStaffOrEducator && currentResourcesSection === 'roadmaps') ? `
+        ${(isAdmin && (currentResourcesSection === 'lab_manuals' || currentResourcesSection === 'books')) || (isStaffOrEducator && currentResourcesSection === 'roadmaps' && !currentResourcesFolder) ? `
           <button class="btn btn-primary" id="btn-resources-add-folder" style="display: flex; align-items: center; gap: 6px;">
             <i data-lucide="folder-plus" style="width: 18px; height: 18px;"></i> Add Folder
           </button>
@@ -1752,7 +1752,7 @@ async function renderResourcesView() {
           <div class="empty-state">
             <i data-lucide="map" style="width: 30px; height: 30px; margin-bottom: 10px; color: var(--text-muted);"></i>
             <p>No folders or roadmaps here yet.</p>
-            ${isStaffOrEducator ? '<p style="font-size: 14px; margin-top: 6px;">Click "Add Folder" or "Upload PDF" to get started.</p>' : ''}
+            ${isStaffOrEducator ? `<p style="font-size: 14px; margin-top: 6px;">Click ${!currentResourcesFolder ? '"Add Folder" or ' : ''}"Upload PDF" to get started.</p>` : ''}
           </div>
         `;
         lucide.createIcons();
