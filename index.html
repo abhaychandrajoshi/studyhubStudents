@@ -6,6 +6,17 @@
   <title>Studyhub - Notes, Papers, and Resources</title>
   <meta name="description" content="A comprehensive academic sharing resource hub for notes, PYQs, and textbooks.">
   <link rel="stylesheet" href="/style.css?v=1.0.3">
+  <!-- Detect App Environment (Median/PWA) to Hide Download App Buttons -->
+  <script>
+    (function() {
+      var isApp = /Median/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
+      if (isApp) {
+        var style = document.createElement('style');
+        style.innerHTML = '.btn-download-app-trigger { display: none !important; }';
+        document.head.appendChild(style);
+      }
+    })();
+  </script>
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
