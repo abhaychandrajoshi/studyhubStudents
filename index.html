@@ -698,12 +698,12 @@
 
         <!-- File Upload Section -->
         <div class="form-group" id="group-upload-file">
-          <label class="form-label">Select Document File</label>
+          <label class="form-label">Select PDF Document</label>
           <div id="upload-drag-box" class="file-upload-box">
             <i data-lucide="upload-cloud" class="file-upload-icon" style="width: 30px; height: 30px;"></i>
             <p style="font-size: 14px; font-weight: 600;" id="upload-file-label">Click to browse files</p>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Any file type allowed. Non-PDF files will be auto-converted to PDF (Maximum 10 MB)</p>
-            <input type="file" id="upload-file-input" style="display: none;" />
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Only PDF documents are allowed (Maximum 10 MB)</p>
+            <input type="file" id="upload-file-input" accept="application/pdf" style="display: none;" />
           </div>
         </div>
 
@@ -1014,12 +1014,12 @@
 
         <!-- File Upload Section -->
         <div class="form-group" id="group-contribute-file">
-          <label class="form-label">Select Document File</label>
+          <label class="form-label">Select PDF Document</label>
           <div id="contribute-drag-box" class="file-upload-box">
             <i data-lucide="upload-cloud" class="file-upload-icon" style="width: 30px; height: 30px;"></i>
             <p style="font-size: 14px; font-weight: 600;" id="contribute-file-label">Click to browse files</p>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Any file type allowed. Non-PDF files will be auto-converted to PDF (Maximum 10 MB)</p>
-            <input type="file" id="contribute-file-input" style="display: none;" />
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Only PDF documents are allowed (Maximum 10 MB)</p>
+            <input type="file" id="contribute-file-input" accept="application/pdf" style="display: none;" />
           </div>
         </div>
 
@@ -1044,7 +1044,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <script src="/app.js?v=1.0.5"></script>
 </body>
 </html>
