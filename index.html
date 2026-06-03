@@ -48,6 +48,9 @@
           <a href="#/papers" class="nav-link" id="nav-papers">Papers</a>
           <a href="#/resources" class="nav-link" id="nav-resources">Resources</a>
           <a href="#/support" class="nav-link" id="nav-support">Help & Support</a>
+          <a href="#/generators" class="nav-link" id="nav-generators" style="display: flex; align-items: center; gap: 4px;">
+            <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> File Tools
+          </a>
           <a href="#/my-contributions" class="nav-link" id="nav-my-contributions" style="display: none; align-items: center; gap: 4px;">
             <i data-lucide="award" style="width: 16px; height: 16px;"></i> My Contributions
           </a>
@@ -597,6 +600,256 @@
               </button>
             </form>
           </div>
+        </div>
+      </div>
+
+      <!-- RESET PASSWORD VIEW -->
+      <div id="view-reset-password" class="page-view" style="display: none;">
+        <div class="auth-container">
+          <div class="card auth-card" style="box-shadow: var(--shadow-lg); border-top: 4px solid var(--primary); max-width: 450px; width: 100%;">
+            <div class="auth-header">
+              <h2 style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i data-lucide="key-round" style="color: var(--primary); width: 28px; height: 28px;"></i>
+                Reset Password
+              </h2>
+              <p>Change your account password securely</p>
+            </div>
+
+            <div id="reset-password-error-alert" class="alert alert-danger" style="display: none;"></div>
+            <div id="reset-password-success-alert" class="alert alert-success" style="display: none;"></div>
+
+            <form id="form-reset-password">
+              <div class="form-group">
+                <label class="form-label" for="reset-old-password">Old Password</label>
+                <div style="position: relative;">
+                  <i data-lucide="lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
+                  <input id="reset-old-password" type="password" class="form-input" style="padding-left: 44px; padding-right: 44px;" placeholder="Enter old password" required />
+                  <button type="button" id="btn-show-reset-old-password" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; padding: 0;" title="Show Password">
+                    <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reset-new-password">New Password</label>
+                <div style="position: relative;">
+                  <i data-lucide="key-round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
+                  <input id="reset-new-password" type="password" class="form-input" style="padding-left: 44px; padding-right: 44px;" placeholder="Enter new password (min 6 chars)" required />
+                  <button type="button" id="btn-show-reset-new-password" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; padding: 0;" title="Show Password">
+                    <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reset-confirm-password">Confirm New Password</label>
+                <div style="position: relative;">
+                  <i data-lucide="check-circle" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
+                  <input id="reset-confirm-password" type="password" class="form-input" style="padding-left: 44px; padding-right: 44px;" placeholder="Confirm new password" required />
+                  <button type="button" id="btn-show-reset-confirm-password" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; padding: 0;" title="Show Password">
+                    <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <span id="reset-password-btn-content" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <i data-lucide="save" style="width: 18px; height: 18px;"></i> Change Password
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILE TOOLS / GENERATORS VIEW -->
+      <div id="view-generators" class="page-view" style="display: none;">
+        <div class="generators-container" style="max-width: 1200px; margin: 0 auto; padding: 20px 10px;">
+          
+          <!-- Title & Navigation -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <h2 style="display: flex; align-items: center; gap: 8px; color: var(--primary-dark); margin: 0; font-size: 22px;">
+                <i data-lucide="file-text" style="color: var(--primary); width: 28px; height: 28px;"></i>
+                Practical File Generators
+              </h2>
+              <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px; margin-bottom: 0;">Generate custom Front Pages & Index tables for your lab submissions.</p>
+            </div>
+            <!-- Tab Toggles -->
+            <div class="tab-group" style="display: flex; gap: 6px; background: rgba(0,0,0,0.03); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <button id="btn-tab-frontpage" class="tab-btn active" style="padding: 6px 14px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                <i data-lucide="book-open" style="width: 14px; height: 14px;"></i> Front Page
+              </button>
+              <button id="btn-tab-indexpage" class="tab-btn" style="padding: 6px 14px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                <i data-lucide="list" style="width: 14px; height: 14px;"></i> Index Sheet
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Working Layout Grid -->
+          <div class="generators-layout">
+            
+            <!-- LEFT COLUMN: Forms -->
+            <div class="card generator-form-panel" style="padding: 24px;">
+              
+              <!-- ================= FRONT PAGE FORM ================= -->
+              <div id="form-section-frontpage" class="generator-section">
+                <h4 style="color: var(--primary); margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-size: 16px;">Front Page Details</h4>
+                <form id="generator-frontpage-form">
+                  
+                  <div class="form-group">
+                    <label class="form-label">College/Institute Name</label>
+                    <input type="text" id="fp-college-name" class="form-input" value="BIPIN TRIPATHI KUMAON INSTITUTE OF TECHNOLOGY" placeholder="Enter College Name" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">College Logo (Optional)</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <input type="file" id="fp-logo-input" accept="image/*" class="form-input" style="padding: 4px;" />
+                      <button type="button" id="btn-clear-fp-logo" class="btn btn-danger btn-sm" style="display: none; padding: 8px 12px; height: 38px; align-items: center; justify-content: center; gap: 4px;" title="Clear Logo">
+                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Clear
+                      </button>
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Upload PNG/JPG logo (Max 2MB). Ideal size: Square.</p>
+                  </div>
+
+                  <div class="form-group-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                      <label class="form-label">Department</label>
+                      <input type="text" id="fp-department" class="form-input" value="DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING" placeholder="e.g., Dept of Mechanical Engineering" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Course / Branch</label>
+                      <input type="text" id="fp-branch" class="form-input" value="B.Tech Computer Science & Engg." placeholder="e.g., B.Tech Information Technology" />
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Subject Name</label>
+                    <input type="text" id="fp-subject-name" class="form-input" value="DATABASE MANAGEMENT SYSTEMS LAB" placeholder="e.g., Computer Graphics" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Practical File / Assignment Title</label>
+                    <input type="text" id="fp-title" class="form-input" value="LABORATORY PRACTICAL FILE" placeholder="e.g., Practical Notebook / Mini Project Report" />
+                  </div>
+
+                  <!-- Personnel Details -->
+                  <div style="border-top: 1px dashed var(--border-color); margin: 20px 0; padding-top: 16px;">
+                    <h5 style="color: var(--text-main); margin-top: 0; margin-bottom: 12px; font-weight: 700; font-size: 14px;">Personnel Details</h5>
+                    
+                    <div class="form-group-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div style="background: rgba(0,0,0,0.01); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <span style="font-size: 10px; font-weight: bold; color: var(--primary); display: block; margin-bottom: 8px; text-transform: uppercase;">Submitted By (Student)</span>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                          <label class="form-label" style="font-size: 9px; margin-bottom: 2px;">Name</label>
+                          <input type="text" id="fp-student-name" class="form-input" placeholder="Student Name" required />
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                          <label class="form-label" style="font-size: 9px; margin-bottom: 2px;">Roll Number</label>
+                          <input type="text" id="fp-student-roll" class="form-input" placeholder="Roll Number" required />
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                          <label class="form-label" style="font-size: 9px; margin-bottom: 2px;">Semester / Section</label>
+                          <input type="text" id="fp-student-sem" class="form-input" value="5th Semester" placeholder="e.g. 5th Semester, Sec A" />
+                        </div>
+                      </div>
+
+                      <div style="background: rgba(0,0,0,0.01); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <span style="font-size: 10px; font-weight: bold; color: var(--success); display: block; margin-bottom: 8px; text-transform: uppercase;">Submitted To (Teacher)</span>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                          <label class="form-label" style="font-size: 9px; margin-bottom: 2px;">Teacher Name</label>
+                          <input type="text" id="fp-teacher-name" class="form-input" placeholder="Teacher's Name" required />
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                          <label class="form-label" style="font-size: 9px; margin-bottom: 2px;">Designation</label>
+                          <input type="text" id="fp-teacher-title" class="form-input" value="Assistant Professor" placeholder="e.g., Associate Professor, Dept of CSE" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                      <label class="form-label">Academic Session</label>
+                      <input type="text" id="fp-session" class="form-input" value="2025 - 2026" placeholder="e.g. 2025 - 2026" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Template Design</label>
+                      <select id="fp-template" class="form-input">
+                        <option value="classic">Classic Formal</option>
+                        <option value="modern">Modern Minimalist</option>
+                        <option value="tech">Elegant Tech</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button type="button" id="btn-generate-fp-pdf" class="btn btn-primary" style="width: 100%; margin-top: 16px; justify-content: center; gap: 8px; display: flex; align-items: center;">
+                    <i data-lucide="download"></i> Download Front Page PDF
+                  </button>
+                </form>
+              </div>
+
+              <!-- ================= INDEX PAGE FORM ================= -->
+              <div id="form-section-indexpage" class="generator-section" style="display: none;">
+                <h4 style="color: var(--primary); margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-size: 16px;">Index Sheet Details</h4>
+                <form id="generator-indexpage-form">
+                  
+                  <!-- Student and class details removed for index page to keep it clean -->
+
+                  <!-- Dynamic Index Rows Editor -->
+                  <div style="border-top: 1px dashed var(--border-color); margin: 20px 0; padding-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <h5 style="margin: 0; font-weight: 700; color: var(--text-main); font-size: 14px;">Index Entries</h5>
+                      <button type="button" id="btn-add-idx-row" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; height: 30px;">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add Row
+                      </button>
+                    </div>
+
+                    <!-- Scrollable input container -->
+                    <div id="idx-rows-input-container" style="max-height: 280px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+                      <!-- Dynamic rows load here -->
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Template Design</label>
+                    <select id="idx-template" class="form-input">
+                      <option value="classic">Standard Lab Index</option>
+                      <option value="modern">Modern Zebra Index</option>
+                    </select>
+                  </div>
+
+                  <button type="button" id="btn-generate-idx-pdf" class="btn btn-primary" style="width: 100%; margin-top: 16px; justify-content: center; gap: 8px; display: flex; align-items: center;">
+                    <i data-lucide="download"></i> Download Index PDF
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Real-Time Live Preview -->
+            <div class="generator-preview-panel">
+              <div style="position: sticky; top: 90px; z-index: 10;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 4px; text-transform: uppercase;">
+                    <span style="width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; display: inline-block;"></span>
+                    Live A4 Preview
+                  </span>
+                  <span id="preview-page-aspect" style="font-size: 11px; color: var(--text-muted);">Standard A4 Sheet</span>
+                </div>
+
+                <!-- A4 Canvas Sheet -->
+                <div id="a4-preview-container" style="background: var(--white); border-radius: var(--radius-md); box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid var(--border-color);">
+                  <div id="a4-preview-sheet" class="a4-preview-sheet">
+                    <!-- Live inner content generated dynamically by app.js -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
 
