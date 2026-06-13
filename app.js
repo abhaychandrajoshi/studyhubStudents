@@ -1,3 +1,554 @@
+
+
+// --- SONIC CHATBOT ENGINE ---
+let chatSessionHistory = [];
+let hasChatHistory = false;
+
+window.addEventListener('beforeunload', (e) => {
+  if (hasChatHistory) {
+    e.preventDefault();
+    e.returnValue = 'Refreshing the page will clear your conversation history. Are you sure you want to refresh?';
+    return e.returnValue;
+  }
+});
+
+function cleanLaTeX(text) {
+  if (!text) return '';
+  let cleaned = text;
+
+  // Replace block math wrappers
+  cleaned = cleaned.replace(/\\\[\s*/g, '\n').replace(/\s*\\\]/g, '\n');
+  // Replace inline math wrappers
+  cleaned = cleaned.replace(/\\\(\s*/g, ' ').replace(/\s*\\\)/g, ' ');
+  // Replace LaTeX subscripts like _{\text{net}} -> _net
+  cleaned = cleaned.replace(/_\{?\\text\{\s*(.*?)\s*\}\}?/g, '_$1');
+  cleaned = cleaned.replace(/_\{\s*(.*?)\s*\}/g, '_$1');
+  
+  // Clean common LaTeX commands
+  cleaned = cleaned.replace(/\\Sigma/g, 'Σ')
+                   .replace(/\\theta/g, 'θ')
+                   .replace(/\\pi/g, 'π')
+                   .replace(/\\alpha/g, 'α')
+                   .replace(/\\beta/g, 'β')
+                   .replace(/\\gamma/g, 'γ')
+                   .replace(/\\delta/g, 'δ')
+                   .replace(/\\lambda/g, 'λ')
+                   .replace(/\\mu/g, 'μ')
+                   .replace(/\\infty/g, '∞')
+                   .replace(/\\times/g, '×')
+                   .replace(/\\div/g, '÷')
+                   .replace(/\\pm/g, '±')
+                   .replace(/\\neq/g, '≠')
+                   .replace(/\\leq/g, '≤')
+                   .replace(/\\geq/g, '≥')
+                   .replace(/\\approx/g, '≈')
+                   .replace(/\\rightarrow/g, '→')
+                   .replace(/\\Rightarrow/g, '⇒')
+                   .replace(/\\leftarrow/g, '←')
+                   .replace(/\\Leftarrow/g, '⇐')
+                   .replace(/\\leftrightarrow/g, '↔')
+                   .replace(/\\Leftrightarrow/g, '⇔')
+                   .replace(/\\cdot/g, '·')
+                   .replace(/\\to/g, '→')
+                   .replace(/\\text\{\s*(.*?)\s*\}/g, '$1')
+                   .replace(/\\frac\{\s*(.*?)\s*\}\{\s*(.*?)\s*\}/g, '($1 / $2)')
+                   .replace(/\\sqrt\{\s*(.*?)\s*\}/g, '√($1)')
+                   .replace(/\\Delta/g, 'Δ');
+  return cleaned;
+}
+
+function formatChatText(text) {
+  text = cleanLaTeX(text);
+  const lines = text.split('\n');
+  let result = [];
+  let inUl = false;
+  let inOl = false;
+  let inCodeBlock = false;
+
+  for (let line of lines) {
+    // Escape HTML tags for security
+    let escaped = line
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    // Handle Code Block Toggle
+    if (escaped.trim().startsWith('```')) {
+      if (inCodeBlock) {
+        result.push('</pre>');
+        inCodeBlock = false;
+      } else {
+        const lang = escaped.trim().slice(3).trim();
+        result.push(`<pre style="background: rgba(0,0,0,0.04); padding: 12px; border-radius: 8px; font-family: monospace; overflow-x: auto; margin: 8px 0; border: 1px solid rgba(0,0,0,0.08); line-height: 1.4; font-size: 12.5px;" data-lang="${lang}">`);
+        inCodeBlock = true;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      result.push(escaped + '\n');
+      continue;
+    }
+
+    // Process Inline Formats (Bold, Italic, Inline Code)
+    function formatInline(str) {
+      str = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      str = str.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      str = str.replace(/`(.*?)`/g, '<code style="background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 90%; color: #e11d48;">$1</code>');
+      return str;
+    }
+
+    // Check for List Items
+    const ulMatch = escaped.match(/^[\-\*]\s+(.*)$/);
+    const olMatch = escaped.match(/^\d+\.\s+(.*)$/);
+
+    if (ulMatch) {
+      if (inOl) {
+        result.push('</ol>');
+        inOl = false;
+      }
+      if (!inUl) {
+        result.push('<ul style="margin: 6px 0; padding-left: 20px; list-style-type: disc;">');
+        inUl = true;
+      }
+      result.push(`<li style="margin-bottom: 4px; line-height: 1.5;">${formatInline(ulMatch[1])}</li>`);
+    } else if (olMatch) {
+      if (inUl) {
+        result.push('</ul>');
+        inUl = false;
+      }
+      if (!inOl) {
+        result.push('<ol style="margin: 6px 0; padding-left: 20px; list-style-type: decimal;">');
+        inOl = true;
+      }
+      result.push(`<li style="margin-bottom: 4px; line-height: 1.5;">${formatInline(olMatch[1])}</li>`);
+    } else {
+      if (inUl) {
+        result.push('</ul>');
+        inUl = false;
+      }
+      if (inOl) {
+        result.push('</ol>');
+        inOl = false;
+      }
+
+      // Check for Headers
+      const h3Match = escaped.match(/^###\s+(.*)$/);
+      const h2Match = escaped.match(/^##\s+(.*)$/);
+      const h1Match = escaped.match(/^#\s+(.*)$/);
+
+      if (h3Match) {
+        result.push(`<h4 style="margin: 12px 0 6px 0; font-size: 13.5px; font-weight: 700; color: var(--text-main);">${formatInline(h3Match[1])}</h4>`);
+      } else if (h2Match) {
+        result.push(`<h3 style="margin: 16px 0 8px 0; font-size: 14.5px; font-weight: 700; color: var(--text-main);">${formatInline(h2Match[1])}</h3>`);
+      } else if (h1Match) {
+        result.push(`<h2 style="margin: 20px 0 10px 0; font-size: 15.5px; font-weight: 700; color: var(--text-main);">${formatInline(h1Match[1])}</h2>`);
+      } else {
+        const trimmed = escaped.trim();
+        if (trimmed === '') {
+          result.push('<div style="height: 8px;"></div>');
+        } else {
+          result.push(`<p style="margin: 0 0 6px 0; line-height: 1.5;">${formatInline(escaped)}</p>`);
+        }
+      }
+    }
+  }
+
+  if (inUl) result.push('</ul>');
+  if (inOl) result.push('</ol>');
+  if (inCodeBlock) result.push('</pre>');
+
+  return result.join('');
+}
+
+function typeHtml(element, html, speed = 15, onComplete) {
+  const tokens = html.match(/<[^>]+>|&[a-zA-Z0-9#]+;|[^<&]+/g) || [];
+  let tokenIndex = 0;
+  let charIndex = 0;
+  let currentHTML = "";
+
+  function typeNext() {
+    if (tokenIndex >= tokens.length) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const token = tokens[tokenIndex];
+
+    if ((token.startsWith('<') && token.endsWith('>')) || (token.startsWith('&') && token.endsWith(';'))) {
+      currentHTML += token;
+      element.innerHTML = currentHTML;
+      tokenIndex++;
+      typeNext();
+    } else {
+      if (charIndex < token.length) {
+        currentHTML += token[charIndex];
+        element.innerHTML = currentHTML;
+        charIndex++;
+        const chatContainer = document.getElementById('sonic-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        setTimeout(typeNext, speed);
+      } else {
+        charIndex = 0;
+        tokenIndex++;
+        typeNext();
+      }
+    }
+  }
+
+  typeNext();
+}
+
+function appendSonicMessage(role, text) {
+  return new Promise((resolve) => {
+    const container = document.getElementById('sonic-messages');
+    if (!container) {
+      resolve();
+      return;
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${role}`;
+    
+    if (role === 'user') {
+      bubble.style.cssText = `
+        align-self: flex-end;
+        max-width: 80%;
+        background: var(--primary);
+        color: white;
+        border-radius: 16px 16px 0 16px;
+        padding: 10px 16px;
+        box-shadow: var(--shadow-sm);
+        word-break: break-word;
+        line-height: 1.5;
+        font-size: 13px;
+      `;
+      bubble.innerHTML = formatChatText(text);
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+      resolve();
+    } else {
+      bubble.style.cssText = `
+        align-self: flex-start;
+        max-width: 85%;
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 0 16px 16px 16px;
+        padding: 12px 16px;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        gap: 10px;
+        word-break: break-word;
+        line-height: 1.5;
+        font-size: 13px;
+      `;
+      bubble.innerHTML = `
+        <div style="font-size: 18px; margin-top: 2px;">⚡</div>
+        <div style="flex: 1;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">SONIC</div>
+          <div class="chat-text"></div>
+        </div>
+      `;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+
+      const chatTextElement = bubble.querySelector('.chat-text');
+      const formattedHtml = formatChatText(text);
+
+      const input = document.getElementById('sonic-input');
+      const form = document.getElementById('form-sonic-chat');
+      let submitBtn = null;
+      if (form) {
+        submitBtn = form.querySelector('button[type="submit"]');
+      }
+
+      if (input) input.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+      }
+
+      typeHtml(chatTextElement, formattedHtml, 15, () => {
+        if (input) {
+          input.disabled = false;
+          input.focus();
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+        }
+        resolve();
+      });
+    }
+  });
+}
+
+async function askSonicDirect(userMsg) {
+  const HF_TOKEN = process.env.HF_TOKEN;
+  const COMPLETIONS_URL = 'https://api-inference.huggingface.co/v1/chat/completions';
+
+  const systemPrompt = `You are SONIC, a helpful AI study assistant.
+STRICT RULES:
+1. ONLY answer questions related to studies, academics, homework, exams, courses, and educational topics. If the user asks a question that is NOT related to studies (such as casual chit-chat, hobbies, entertainment, sports, movies, games, jokes, personal questions, how to cook, etc.), you MUST politely decline and ask them to ask something related to studies.
+2. STRICTLY FORBIDDEN: Do NOT use LaTeX math equations or symbol wrappers like \\[ ... \\], $$ ... $$, \\( ... \\), or $ ... $.
+3. DO NOT write raw LaTeX math notation (e.g. \\frac, \\Sigma, \\Rightarrow, \\text, etc.).
+4. Use clean, plain-text math/science equations and unicode symbols (e.g., use 'F_net = m * a', 'a = F_net / m', 'E = m * c^2', 'ΣF = 0 ⇒ v = constant').
+5. DO NOT include unnecessary introductory phrases (such as "Sure! I can teach you..." or "Here is what you need...") or polite concluding chit-chat. Directly output the relevant educational notes, formulas, or step-by-step explanations.
+6. Keep formatting clean and readable using standard bold text, list bullets, or simple markdown headers.`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  for (const turn of chatSessionHistory) {
+    messages.push({
+      role: turn.role === 'user' ? 'user' : 'assistant',
+      content: turn.content
+    });
+  }
+  messages.push({ role: 'user', content: userMsg });
+
+  const models = [
+    'openchat/openchat-3.5-0106',
+    'Qwen/Qwen2.5-7B-Instruct',
+    'mistralai/Mistral-7B-Instruct-v0.3',
+    'HuggingFaceH4/zephyr-7b-beta'
+  ];
+
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      console.log(`Direct fetch trying model: ${model}`);
+      const response = await fetch(COMPLETIONS_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HF_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          max_tokens: 500,
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData.error && errData.error.message ? errData.error.message : (errData.error || `HTTP ${response.status}`);
+        throw new Error(errMsg);
+      }
+
+      const data = await response.json();
+
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        return data.choices[0].message.content.trim();
+      }
+      throw new Error('Invalid response format');
+    } catch (err) {
+      console.warn(`Direct fetch failed for model ${model}:`, err.message);
+      lastError = err;
+      // If the error indicates a network block (like Failed to fetch), escalate immediately to trigger backend proxy
+      if (err.message && err.message.includes('Failed to fetch')) {
+        throw err;
+      }
+    }
+  }
+
+  throw lastError || new Error('All models failed to respond');
+}
+
+async function askSonicProxy(userMsg) {
+  const data = await request('/sonic/chat', {
+    method: 'POST',
+    body: { prompt: userMsg, history: chatSessionHistory }
+  });
+
+  if (data && data.response) {
+    return data.response.trim();
+  }
+  throw new Error('Invalid response from proxy');
+}
+
+async function askSonicPuter(userMsg) {
+  if (typeof puter === 'undefined') {
+    throw new Error('Puter SDK not loaded');
+  }
+
+  console.log('Querying Puter AI (Stage 3 fallback)...');
+  const systemPrompt = `You are SONIC, a helpful AI study assistant.
+STRICT RULES:
+1. ONLY answer questions related to studies, academics, homework, exams, courses, and educational topics. If the user asks a question that is NOT related to studies (such as casual chit-chat, hobbies, entertainment, sports, movies, games, jokes, personal questions, how to cook, etc.), you MUST politely decline and ask them to ask something related to studies.
+2. STRICTLY FORBIDDEN: Do NOT use LaTeX math equations or symbol wrappers like \\[ ... \\], $$ ... $$, \\( ... \\), or $ ... $.
+3. DO NOT write raw LaTeX math notation (e.g. \\frac, \\Sigma, \\Rightarrow, \\text, etc.).
+4. Use clean, plain-text math/science equations and unicode symbols (e.g., use 'F_net = m * a', 'a = F_net / m', 'E = m * c^2', 'ΣF = 0 ⇒ v = constant').
+5. DO NOT include unnecessary introductory phrases (such as "Sure! I can teach you..." or "Here is what you need...") or polite concluding chit-chat. Directly output the relevant educational notes, formulas, or step-by-step explanations.
+6. Keep formatting clean and readable using standard bold text, list bullets, or simple markdown headers.`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  for (const turn of chatSessionHistory) {
+    messages.push({
+      role: turn.role === 'user' ? 'user' : 'assistant',
+      content: turn.content
+    });
+  }
+  messages.push({ role: 'user', content: userMsg });
+
+  const response = await puter.ai.chat(messages);
+  
+  if (response && response.message && response.message.content) {
+    const content = response.message.content;
+    if (typeof content === 'string') {
+      return content.trim();
+    }
+    if (Array.isArray(content) && content[0] && content[0].text) {
+      return content[0].text.trim();
+    }
+  }
+
+  if (typeof response === 'string') {
+    return response.trim();
+  }
+
+  throw new Error('Invalid response from Puter AI');
+}
+
+async function askSonicPollinations(userMsg) {
+  console.log('Querying Pollinations GET (Stage 4 fallback)...');
+  const systemPrompt = `You are SONIC, a helpful AI study assistant.
+STRICT RULES:
+1. ONLY answer questions related to studies, academics, homework, exams, courses, and educational topics. If the user asks a question that is NOT related to studies (such as casual chit-chat, hobbies, entertainment, sports, movies, games, jokes, personal questions, how to cook, etc.), you MUST politely decline and ask them to ask something related to studies.
+2. STRICTLY FORBIDDEN: Do NOT use LaTeX math equations or symbol wrappers like \\[ ... \\], $$ ... $$, \\( ... \\), or $ ... $.
+3. DO NOT write raw LaTeX math notation (e.g. \\frac, \\Sigma, \\Rightarrow, \\text, etc.).
+4. Use clean, plain-text math/science equations and unicode symbols (e.g., use 'F_net = m * a', 'a = F_net / m', 'E = m * c^2', 'ΣF = 0 ⇒ v = constant').
+5. DO NOT include unnecessary introductory phrases (such as "Sure! I can teach you..." or "Here is what you need...") or polite concluding chit-chat. Directly output the relevant educational notes, formulas, or step-by-step explanations.
+6. Keep formatting clean and readable using standard bold text, list bullets, or simple markdown headers.`;
+
+  let fullPrompt = `System: ${systemPrompt}\n\n`;
+  for (const turn of chatSessionHistory) {
+    fullPrompt += `${turn.role === 'user' ? 'User' : 'Assistant'}: ${turn.content}\n`;
+  }
+  fullPrompt += `User: ${userMsg}`;
+
+  const models = ['openai', 'mistral', 'llama'];
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      console.log(`Pollinations GET trying model: ${model}`);
+      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const url = `https://text.pollinations.ai/${encodedPrompt}?model=${model}&jsonMode=false`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.error) {
+            throw new Error(parsed.error.message || parsed.error);
+          }
+        } catch (e) {
+          // Success: Raw text response
+        }
+        return text.trim();
+      }
+      throw new Error('Empty response');
+    } catch (err) {
+      console.warn(`Pollinations GET model ${model} failed:`, err.message);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All Pollinations models failed');
+}
+
+async function askSonic(userMsg) {
+  // 1. Try browser-side direct Hugging Face query
+  try {
+    return await askSonicDirect(userMsg);
+  } catch (directErr) {
+    console.warn('Direct Hugging Face query failed:', directErr.message);
+
+    // 2. Try backend proxy Hugging Face query
+    try {
+      return await askSonicProxy(userMsg);
+    } catch (proxyErr) {
+      console.warn('Backend proxy Hugging Face query failed:', proxyErr.message);
+
+      // 3. Try Puter AI directly (unblocked, keyless, very stable)
+      try {
+        return await askSonicPuter(userMsg);
+      } catch (puterErr) {
+        console.warn('Puter AI query failed:', puterErr.message);
+
+        // 4. Try Pollinations GET keyless query directly in browser
+        try {
+          return await askSonicPollinations(userMsg);
+        } catch (pollinationsErr) {
+          console.error('All routes failed for SONIC:', pollinationsErr);
+          throw new Error(`Failed to connect to SONIC chatbot. (HuggingFace Direct: ${directErr.message} | HuggingFace Proxy: ${proxyErr.message} | Puter AI: ${puterErr.message} | Pollinations GET: ${pollinationsErr.message})`);
+        }
+      }
+    }
+  }
+}
+
+function initSonicEventHandlers() {
+  const form = document.getElementById('form-sonic-chat');
+  const input = document.getElementById('sonic-input');
+  const typingIndicator = document.getElementById('sonic-typing');
+  const btnPrint = document.getElementById('btn-print-chat');
+
+  if (form && input) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMsg = input.value.trim();
+      if (!userMsg) return;
+
+      input.value = '';
+      await appendSonicMessage('user', userMsg);
+      hasChatHistory = true;
+
+      // Add to session history
+      chatSessionHistory.push({ role: 'user', content: userMsg });
+
+      // Show typing indicator
+      if (typingIndicator) typingIndicator.style.display = 'flex';
+
+      try {
+        const botResponse = await askSonic(userMsg);
+        
+        // Hide typing indicator
+        if (typingIndicator) typingIndicator.style.display = 'none';
+
+        await appendSonicMessage('bot', botResponse);
+        chatSessionHistory.push({ role: 'bot', content: botResponse });
+      } catch (err) {
+        if (typingIndicator) typingIndicator.style.display = 'none';
+        await appendSonicMessage('bot', `Sorry, I encountered an error: ${err.message}. Please check your connection and try again!`);
+      }
+    });
+  }
+
+  if (btnPrint) {
+    btnPrint.addEventListener('click', () => {
+      window.print();
+    });
+  }
+}
+
 // --- API SERVICE ---
 const isLocalhost = window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1' || 
@@ -402,11 +953,18 @@ function updateNavbar() {
   const adminTab = document.getElementById('nav-admin');
   const mobMenu = document.getElementById('mobile-nav-menu');
   const floatingContributeBtn = document.getElementById('btn-floating-contribute');
+  const floatingSonicBtn = document.getElementById('btn-floating-sonic');
 
   if (currentUser && currentUser.role === 'student') {
     if (floatingContributeBtn) floatingContributeBtn.style.display = 'flex';
   } else {
     if (floatingContributeBtn) floatingContributeBtn.style.display = 'none';
+  }
+
+  if (currentUser) {
+    if (floatingSonicBtn) floatingSonicBtn.style.display = 'flex';
+  } else {
+    if (floatingSonicBtn) floatingSonicBtn.style.display = 'none';
   }
 
   if (currentUser) {
@@ -472,6 +1030,7 @@ function updateNavbar() {
           <a href="#/reset-password" class="profile-dropdown-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-main); font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition); margin-bottom: 8px; border: 1px solid var(--border-color); background-color: var(--primary-accent);">
             <i data-lucide="key-round" style="width: 14px; height: 14px; color: var(--primary);"></i> Reset Password
           </a>
+
           <button id="btn-logout" class="btn btn-danger btn-sm profile-logout-btn" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; width: 100%;">
             <i data-lucide="log-out" style="width: 14px; height: 14px;"></i> Logout
           </button>
@@ -498,6 +1057,25 @@ function updateNavbar() {
     document.getElementById('btn-logout').addEventListener('click', () => {
       api.logout();
       currentUser = null;
+      chatSessionHistory = [];
+      hasChatHistory = false;
+      const container = document.getElementById('sonic-messages');
+      if (container) {
+        container.innerHTML = `
+          <!-- System / Welcome Message -->
+          <div class="message-bubble system" style="align-self: flex-start; max-width: 85%; background: var(--white); border: 1px solid var(--border-color); border-radius: 0 16px 16px 16px; padding: 12px 16px; box-shadow: var(--shadow-sm); display: flex; gap: 10px;">
+            <div style="font-size: 18px; margin-top: 2px;">⚡</div>
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">SONIC</div>
+              <div style="font-size: 13px; color: var(--text-main); line-height: 1.5;" class="chat-text">
+                Hello! I am **SONIC**, your personal AI study assistant. I'm here to help you solve academic problems, understand concepts, and prepare for exams.
+                <br/><br/>
+                <em>Please note: I am restricted to study-related questions only. How can I help you today?</em>
+              </div>
+            </div>
+          </div>
+        `;
+      }
       updateNavbar();
       navigate('#/');
     });
@@ -524,6 +1102,7 @@ function updateNavbar() {
         <a href="#/support" class="mobile-nav-link" id="mob-nav-support"><i data-lucide="help-circle" style="width: 18px; height: 18px;"></i> Help & Support</a>
         <a href="#/generators" class="mobile-nav-link" id="mob-nav-generators"><i data-lucide="file-text" style="width: 18px; height: 18px;"></i> File Tools</a>
         <a href="#/reset-password" class="mobile-nav-link" id="mob-nav-reset-password"><i data-lucide="key-round" style="width: 18px; height: 18px;"></i> Reset Password</a>
+
         ${currentUser.role === 'student' ? `
           <a href="#/my-contributions" class="mobile-nav-link" id="mob-nav-my-contributions"><i data-lucide="award" style="width: 18px; height: 18px;"></i> My Contributions</a>
         ` : ''}
@@ -762,6 +1341,11 @@ async function router() {
     document.getElementById('reset-old-password').value = '';
     document.getElementById('reset-new-password').value = '';
     document.getElementById('reset-confirm-password').value = '';
+
+  } else if (hash === '#/sonic') {
+    document.getElementById('view-sonic').style.display = 'block';
+    const container = document.getElementById('sonic-messages');
+    if (container) container.scrollTop = container.scrollHeight;
   }
 
   lucide.createIcons();
@@ -5743,6 +6327,8 @@ async function initApp() {
   
   updateNavbar();
   initEventHandlers();
+
+  initSonicEventHandlers();
   initContributionEventHandlers();
   initEditorEventHandlers();
   
